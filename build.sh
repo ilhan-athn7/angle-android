@@ -82,6 +82,10 @@ if [ -n "${ANGLE_NDK_ROOT:-}" ]; then
   echo "==> Overriding NDK: $ANGLE_NDK_ROOT"
   NDK_VER_DIR="$(basename "$ANGLE_NDK_ROOT")"
   NDK_MAJOR="${ANGLE_NDK_MAJOR_VERSION:-${NDK_VER_DIR%%.*}}"
+  echo "DEBUG: ANGLE_NDK_ROOT=$ANGLE_NDK_ROOT"
+  echo "DEBUG: ANGLE_NDK_MAJOR_VERSION=${ANGLE_NDK_MAJOR_VERSION:-<unset>}"
+  echo "DEBUG: NDK_VER_DIR=$NDK_VER_DIR"
+  echo "DEBUG: NDK_MAJOR=$NDK_MAJOR"
   cat >> "$OUT_DIR/args.gn" <<EOF
 android_ndk_root = "$ANGLE_NDK_ROOT"
 android_ndk_version = "$NDK_VER_DIR"
