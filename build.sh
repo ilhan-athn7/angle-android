@@ -80,12 +80,28 @@ gn gen "$OUT_DIR"
 # the directory name (e.g. ".../ndk/27.2.12479018" → 27).
 if [ -n "${ANGLE_NDK_ROOT:-}" ]; then
   echo "==> Overriding NDK: $ANGLE_NDK_ROOT"
-  NDK_VER_DIR="$(basename "$ANGLE_NDK_ROOT")"
-  NDK_MAJOR="${ANGLE_NDK_MAJOR_VERSION:-${NDK_VER_DIR%%.*}}"
-  echo "DEBUG: ANGLE_NDK_ROOT=$ANGLE_NDK_ROOT"
-  echo "DEBUG: ANGLE_NDK_MAJOR_VERSION=${ANGLE_NDK_MAJOR_VERSION:-<unset>}"
-  echo "DEBUG: NDK_VER_DIR=$NDK_VER_DIR"
-  echo "DEBUG: NDK_MAJOR=$NDK_MAJOR"
+
+  # Hosted tool-cache layout is .../ndk/<version>/<arch> (e.g. r29/x64),
+  # while a manually installed NDK is .../ndk/<version> (e.g. 27.2.12479018).
+  # Try the parent dir first if the leaf isn't a version-looking string.
+  NDK_LEAF="$(basename "$ANGLE_NDK_ROOT")"
+  if [[ "$NDK_LEAF" =~ ^[0-9] ]] || [[ "$NDK_LEAF" =~ ^r[0-9] ]]; then
+    NDK_VER_DIR="$NDK_LEAF"
+  else
+    NDK_VER_DIR="$(basename "$(dirname "$ANGLE_NDK_ROOT")")"
+  fi
+
+  # Strip a leading 'r' (r29 -> 29), then take the part before the first dot.
+  NDK_VER_NUM="${NDK_VER_DIR#r}"
+  NDK_MAJOR="${ANGLE_NDK_MAJOR_VERSION:-${NDK_VER_NUM%%.*}}"
+
+  if ! [[ "$NDK_MAJOR" =~ ^[0-9]+$ ]]; then
+    echo "ERROR: could not determine numeric NDK major version (got '$NDK_MAJOR')" >&2
+    echo "  ANGLE_NDK_ROOT=$ANGLE_NDK_ROOT" >&2
+    echo "  NDK_VER_DIR=$NDK_VER_DIR" >&2
+    exit 1
+  fi
+
   cat >> "$OUT_DIR/args.gn" <<EOF
 android_ndk_root = "$ANGLE_NDK_ROOT"
 android_ndk_version = "$NDK_VER_DIR"
